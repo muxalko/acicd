@@ -37,7 +37,9 @@ Edit `public/index.html` for the content and `public/styles.css` for the design.
 ## Contributing
 
 Every change starts from an issue, goes through a feature branch and PR, and is
-gated by CI before it can merge. See `.github/` for issue/PR templates and workflows.
+gated by CI before it can merge. See `.github/` for issue/PR templates and
+workflows, `CLAUDE.md` for how the full pipeline and bot identity work, and
+`ROADMAP.md` for known gaps/next steps.
 
 `npm install` sets up a pre-commit hook (via husky) that runs
 [gitleaks](https://github.com/gitleaks/gitleaks) against staged changes to catch
