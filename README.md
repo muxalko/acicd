@@ -33,3 +33,20 @@ Wrangler will ask you to create or choose a Cloudflare Pages project.
 5. Deploy.
 
 Edit `public/index.html` for the content and `public/styles.css` for the design.
+
+## Contributing
+
+Every change starts from an issue, goes through a feature branch and PR, and is
+gated by CI before it can merge. See `.github/` for issue/PR templates and workflows.
+
+`npm install` sets up a pre-commit hook (via husky) that runs
+[gitleaks](https://github.com/gitleaks/gitleaks) against staged changes to catch
+secrets before they're committed. Install gitleaks locally so the hook can run:
+
+```bash
+brew install gitleaks   # macOS/Linuxbrew
+# or see https://github.com/gitleaks/gitleaks#installing
+```
+
+If gitleaks isn't installed locally the hook just warns and skips — CI runs the
+same scan on every PR as the authoritative check either way.
