@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "wrangler pages dev public",
-    "deploy": "wrangler pages deploy public"
+    "deploy": "wrangler pages deploy public",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "wrangler": "^4.125.0"
   },
   "allowScripts": {
