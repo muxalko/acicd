@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-pages-starter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
+  },
+  "allowScripts": {
+    "wrangler@4.125.0": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260820.1": true
+  }
+}
