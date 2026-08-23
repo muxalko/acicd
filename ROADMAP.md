@@ -39,6 +39,6 @@ PR/issue number.
 - **Custom domain** — production still serves from the default
   `acicd-production.pages.dev`, not a real domain.
 - **Bot key continuity** — the GitHub App private key
-  (see `CLAUDE.md` → Bot identity) only exists on one machine. If it's lost,
-  generate a new key from the App's settings page and update `CLAUDE.md`.
+  (see `AGENTS.md` → Bot identity) only exists on one machine. If it's lost,
+  generate a new key from the App's settings page and update `AGENTS.md`.
   No backup/rotation process exists yet.
