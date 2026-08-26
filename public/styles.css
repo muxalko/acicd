@@ -6,8 +6,35 @@
   --muted: #5d6864;
   --accent: #176b4d;
   --accent-dark: #0f5039;
+  --accent-contrast: #ffffff;
   --border: #d9ddd7;
   --max-width: 1120px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --background: #111815;
+    --surface: #1b2521;
+    --text: #edf4f0;
+    --muted: #aab8b2;
+    --accent: #68d4a8;
+    --accent-dark: #4fbd92;
+    --accent-contrast: #082f20;
+    --border: #34423c;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #111815;
+  --surface: #1b2521;
+  --text: #edf4f0;
+  --muted: #aab8b2;
+  --accent: #68d4a8;
+  --accent-dark: #4fbd92;
+  --accent-contrast: #082f20;
+  --border: #34423c;
 }
 
 * {
@@ -62,6 +89,26 @@ nav {
 nav a {
   font-weight: 650;
   text-decoration: none;
+}
+
+.theme-toggle {
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
 }
 
 .hero {
@@ -124,7 +171,7 @@ h2 {
   padding: 0.7rem 1.2rem;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
   font-weight: 750;
   text-decoration: none;
   transition: background 150ms ease, transform 150ms ease;
@@ -195,6 +242,10 @@ footer p {
 
   nav > a:first-child {
     display: none;
+  }
+
+  nav {
+    gap: 0.75rem;
   }
 
   .hero {
