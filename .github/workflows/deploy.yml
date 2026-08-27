@@ -7,7 +7,9 @@ on:
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
-    environment: staging
+    environment:
+      name: staging
+      url: https://acicd-staging.pages.dev
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +29,9 @@ jobs:
   deploy-production:
     needs: deploy-staging
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: production
+      url: https://acicd-production.pages.dev
     steps:
       - uses: actions/checkout@v4
 
