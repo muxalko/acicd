@@ -6,14 +6,314 @@
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const finishNames = {
-    checkerboard: "Checkerboard",
-    "color-gradient": "Color gradient",
-    "grayscale-gradient": "Grayscale gradient",
-  };
-
+  const finishCodes = { gloss: 0, matte: 1, jelly: 2, chrome: 3, pearl: 4, glitter: 5, "cat-eye": 6 };
+  const designs = [
+    { id: "studio-rouge", name: "Studio Rouge", style: "solid", finish: "gloss", motif: "tonal", palette: ["#7c1725", "#a51f32", "#c33549"] },
+    { id: "ink-after-dark", name: "Ink After Dark", style: "solid", finish: "matte", motif: "tonal", palette: ["#11151d", "#242b37", "#394152"] },
+    { id: "cloud-milk", name: "Cloud Milk", style: "solid", finish: "jelly", motif: "sheer", palette: ["#f5eee8", "#eaded8", "#fffaf4"] },
+    { id: "gilded-moss", name: "Gilded Moss", style: "solid", finish: "chrome", motif: "tonal", palette: ["#536348", "#788661", "#b0a36a"] },
+    { id: "oyster-veil", name: "Oyster Veil", style: "solid", finish: "pearl", motif: "sheer", palette: ["#e9ded4", "#d9d5df", "#f3e9d8"] },
+    { id: "blue-hour", name: "Blue Hour", style: "solid", finish: "gloss", motif: "tonal", palette: ["#283d69", "#445e90", "#7687ae"] },
+    { id: "clay-study", name: "Clay Study", style: "solid", finish: "matte", motif: "tonal", palette: ["#914c3c", "#bd735a", "#d89d7d"] },
+    { id: "rosewater", name: "Rosewater", style: "solid", finish: "jelly", motif: "sheer", palette: ["#d67480", "#e8a5a8", "#f5cac5"] },
+    { id: "silver-line", name: "Silver Line", style: "solid", finish: "cat-eye", motif: "tonal", palette: ["#5d6671", "#9da6af", "#dce0e2"] },
+    { id: "sugarplum", name: "Sugarplum", style: "solid", finish: "glitter", motif: "tonal", palette: ["#6e315f", "#9d568a", "#d69bc5"] },
+    { id: "carmine-french", name: "Carmine French", style: "classic", finish: "gloss", motif: "french", palette: ["#edc9b8", "#a9192e", "#f7e4d9"] },
+    { id: "espresso-tips", name: "Espresso Tips", style: "classic", finish: "matte", motif: "french", palette: ["#c9977e", "#3b241f", "#e0b4a0"] },
+    { id: "barely-there", name: "Barely There", style: "classic", finish: "jelly", motif: "french", palette: ["#f2d8ca", "#fff8ee", "#dcae9e"] },
+    { id: "moonlit-half", name: "Moonlit Half-Moon", style: "classic", finish: "cat-eye", motif: "half-moon", palette: ["#1e2948", "#d7d4c8", "#737da0"] },
+    { id: "tortoise-veil", name: "Tortoise Veil", style: "classic", finish: "jelly", motif: "tortoise", palette: ["#c17932", "#50291e", "#e6af54"] },
+    { id: "ballet-ribbon", name: "Ballet Ribbon", style: "classic", finish: "pearl", motif: "french", palette: ["#e8c9c8", "#f9ece8", "#b8868c"] },
+    { id: "velvet-bordeaux", name: "Velvet Bordeaux", style: "classic", finish: "matte", motif: "ombre", palette: ["#2d1720", "#721f37", "#bb5365"] },
+    { id: "champagne-cuticle", name: "Champagne Cuticle", style: "classic", finish: "glitter", motif: "half-moon", palette: ["#b98a58", "#f0d3a5", "#fff2dc"] },
+    { id: "modern-noir", name: "Modern Noir", style: "classic", finish: "gloss", motif: "french", palette: ["#d8a897", "#171719", "#f4d8cc"] },
+    { id: "copper-outline", name: "Copper Outline", style: "classic", finish: "chrome", motif: "outline", palette: ["#412b2a", "#b7694d", "#e6a078"] },
+    { id: "tidepool", name: "Tidepool", style: "artistic", finish: "chrome", motif: "wave", palette: ["#174b55", "#39939a", "#a8d7cf"] },
+    { id: "mineral-bloom", name: "Mineral Bloom", style: "artistic", finish: "pearl", motif: "marble", palette: ["#c8b7bd", "#8f7485", "#f2e7df"] },
+    { id: "bauhaus-garden", name: "Bauhaus Garden", style: "artistic", finish: "matte", motif: "geometric", palette: ["#d9a027", "#2f674e", "#b94c3d"] },
+    { id: "solar-flare", name: "Solar Flare", style: "artistic", finish: "cat-eye", motif: "rays", palette: ["#7d241d", "#ed7f2c", "#ffd578"] },
+    { id: "midnight-orbit", name: "Midnight Orbit", style: "artistic", finish: "glitter", motif: "celestial", palette: ["#141934", "#5260a0", "#ddd4ac"] },
+    { id: "matcha-current", name: "Matcha Current", style: "artistic", finish: "gloss", motif: "wave", palette: ["#4f683c", "#a6b66f", "#e9e2b8"] },
+    { id: "terracotta-grid", name: "Terracotta Grid", style: "artistic", finish: "matte", motif: "grid", palette: ["#b25d43", "#e1a076", "#553c35"] },
+    { id: "koi-pond", name: "Koi Pond", style: "artistic", finish: "jelly", motif: "blobs", palette: ["#b7d8d4", "#e9694f", "#f2c469"] },
+    { id: "aurora-thread", name: "Aurora Thread", style: "artistic", finish: "cat-eye", motif: "wave", palette: ["#172a36", "#4eb3a6", "#a579bc"] },
+    { id: "confetti-press", name: "Confetti Press", style: "artistic", finish: "glitter", motif: "confetti", palette: ["#f1d9c8", "#dc536c", "#456f9b", "#d7ad41"] },
+    { id: "porcelain-vine", name: "Porcelain Vine", style: "artistic", finish: "pearl", motif: "floral", palette: ["#f4ede3", "#315b63", "#a6b59b"] },
+    { id: "electric-petal", name: "Electric Petal", style: "artistic", finish: "chrome", motif: "floral", palette: ["#57256f", "#df4d9a", "#65c5c6"] },
+    { id: "dusk-horizon", name: "Dusk Horizon", style: "artistic", finish: "cat-eye", motif: "ombre", palette: ["#2c254f", "#99516e", "#e1a378"] },
+    { id: "paper-cut", name: "Paper Cut", style: "artistic", finish: "matte", motif: "geometric", palette: ["#ede3cf", "#222d39", "#d66f49"] },
+    { id: "sea-glass", name: "Sea Glass", style: "artistic", finish: "jelly", motif: "mosaic", palette: ["#a8d5c8", "#5c9dab", "#d8c99d"] },
+    { id: "comet-tail", name: "Comet Tail", style: "artistic", finish: "glitter", motif: "celestial", palette: ["#292a48", "#8d6fa5", "#f2d29c"] },
+    { id: "lacquered-check", name: "Lacquered Check", style: "artistic", finish: "gloss", motif: "checker", palette: ["#162f38", "#e6c97a", "#d85f4c"] },
+    { id: "glazed-topography", name: "Glazed Topography", style: "artistic", finish: "pearl", motif: "topography", palette: ["#d6c5ad", "#f5eee1", "#8b7967"] },
+    { id: "molten-ribbon", name: "Molten Ribbon", style: "artistic", finish: "chrome", motif: "wave", palette: ["#3d2222", "#c35e36", "#f2b654"] },
+    { id: "night-garden", name: "Night Garden", style: "artistic", finish: "cat-eye", motif: "floral", palette: ["#142d2a", "#4e8d71", "#b7b65c"] },
+  ];
+  const atlasCache = new Map();
+  const previewCache = new Map();
+  const designById = new Map(designs.map((design) => [design.id, design]));
+  const filters = { style: "all", finish: "all" };
   let viewerApi = null;
-  let selectedFinish = "checkerboard";
+  let selectedDesign = designs[0];
+
+  function label(value) {
+    return value.split("-").map((word) => word[0].toUpperCase() + word.slice(1)).join("-");
+  }
+
+  function seededRandom(seed) {
+    let value = 2166136261;
+    for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
+    return () => {
+      value += 0x6d2b79f5;
+      let result = value;
+      result = Math.imul(result ^ (result >>> 15), result | 1);
+      result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
+      return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function paintFinger(context, design, finger, x, y, width, height) {
+    const colors = design.palette;
+    const base = colors[finger % colors.length];
+    const accent = colors[(finger + 1) % colors.length];
+    const highlight = colors[(finger + 2) % colors.length];
+    const random = seededRandom(`${design.id}-${finger}`);
+    const gradient = context.createLinearGradient(x, y + height, x + width, y);
+    gradient.addColorStop(0, base);
+    gradient.addColorStop(1, accent);
+    context.fillStyle = design.motif === "ombre" ? gradient : base;
+    context.fillRect(x, y, width, height);
+
+    if (design.motif === "french") {
+      context.fillStyle = accent;
+      context.beginPath();
+      context.moveTo(x, y + height * (0.18 + finger * 0.012));
+      context.quadraticCurveTo(x + width / 2, y + height * 0.3, x + width, y + height * 0.16);
+      context.lineTo(x + width, y);
+      context.lineTo(x, y);
+      context.closePath();
+      context.fill();
+    } else if (design.motif === "half-moon") {
+      context.fillStyle = accent;
+      context.beginPath();
+      context.ellipse(x + width / 2, y + height * 1.02, width * 0.44, height * 0.22, 0, 0, Math.PI * 2);
+      context.fill();
+    } else if (design.motif === "tortoise" || design.motif === "blobs") {
+      for (let index = 0; index < 7; index += 1) {
+        context.globalAlpha = design.motif === "tortoise" ? 0.62 : 0.78;
+        context.fillStyle = index % 2 ? accent : highlight;
+        context.beginPath();
+        context.ellipse(x + random() * width, y + random() * height, width * (0.12 + random() * 0.22), height * (0.05 + random() * 0.11), random() * Math.PI, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.globalAlpha = 1;
+    } else if (["wave", "marble", "topography"].includes(design.motif)) {
+      const lines = design.motif === "topography" ? 7 : 4;
+      context.lineCap = "round";
+      for (let index = 0; index < lines; index += 1) {
+        context.strokeStyle = index % 2 ? accent : highlight;
+        context.globalAlpha = design.motif === "marble" ? 0.62 : 0.86;
+        context.lineWidth = Math.max(1.2, width * (design.motif === "topography" ? 0.025 : 0.09));
+        const offset = (index + 0.4) / lines;
+        context.beginPath();
+        context.moveTo(x - width * 0.1, y + height * offset);
+        context.bezierCurveTo(x + width * 0.28, y + height * (offset - 0.18), x + width * 0.65, y + height * (offset + 0.2), x + width * 1.1, y + height * (offset - 0.08));
+        context.stroke();
+      }
+      context.globalAlpha = 1;
+    } else if (design.motif === "geometric") {
+      context.fillStyle = accent;
+      context.fillRect(x, y + height * (0.48 + (finger % 2) * 0.12), width, height * 0.25);
+      context.fillStyle = highlight;
+      context.beginPath();
+      context.arc(x + width * (finger % 2 ? 0.3 : 0.7), y + height * 0.32, width * 0.24, 0, Math.PI * 2);
+      context.fill();
+    } else if (design.motif === "rays") {
+      context.fillStyle = accent;
+      for (let index = 0; index < 7; index += 1) {
+        context.beginPath();
+        context.moveTo(x + width / 2, y + height * 0.7);
+        const angleA = -2.8 + index * 0.45;
+        const angleB = angleA + 0.18;
+        context.lineTo(x + width / 2 + Math.cos(angleA) * height, y + height * 0.7 + Math.sin(angleA) * height);
+        context.lineTo(x + width / 2 + Math.cos(angleB) * height, y + height * 0.7 + Math.sin(angleB) * height);
+        context.fill();
+      }
+    } else if (design.motif === "celestial") {
+      context.fillStyle = highlight;
+      for (let index = 0; index < 9; index += 1) {
+        const radius = index === finger ? width * 0.12 : width * (0.018 + random() * 0.045);
+        context.beginPath();
+        context.arc(x + random() * width, y + random() * height, radius, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.strokeStyle = accent;
+      context.lineWidth = width * 0.035;
+      context.beginPath();
+      context.arc(x + width * 0.5, y + height * 0.42, width * 0.36, 0.3, 2.8);
+      context.stroke();
+    } else if (design.motif === "grid" || design.motif === "checker") {
+      const size = width / (design.motif === "checker" ? 3 : 4);
+      context.strokeStyle = accent;
+      context.lineWidth = Math.max(1, width * 0.035);
+      for (let column = -1; column < 6; column += 1) {
+        for (let row = -1; row < height / size + 1; row += 1) {
+          if (design.motif === "checker" && (column + row + finger) % 2 === 0) {
+            context.fillStyle = (column + finger) % 3 === 0 ? highlight : accent;
+            context.fillRect(x + column * size, y + row * size, size, size);
+          } else if (design.motif === "grid") {
+            context.strokeRect(x + column * size, y + row * size, size, size);
+          }
+        }
+      }
+    } else if (design.motif === "confetti") {
+      for (let index = 0; index < 16; index += 1) {
+        context.fillStyle = colors[index % colors.length];
+        context.save();
+        context.translate(x + random() * width, y + random() * height);
+        context.rotate(random() * Math.PI);
+        context.fillRect(-width * 0.045, -height * 0.018, width * 0.09, height * 0.036);
+        context.restore();
+      }
+    } else if (design.motif === "floral") {
+      context.strokeStyle = accent;
+      context.lineWidth = Math.max(1.2, width * 0.035);
+      context.beginPath();
+      context.moveTo(x + width * 0.15, y + height);
+      context.bezierCurveTo(x + width * 0.85, y + height * 0.72, x + width * 0.1, y + height * 0.38, x + width * 0.7, y);
+      context.stroke();
+      context.fillStyle = highlight;
+      for (let index = 0; index < 4; index += 1) {
+        const flowerY = y + height * (0.18 + index * 0.2);
+        const flowerX = x + width * (index % 2 ? 0.67 : 0.34);
+        context.beginPath();
+        context.ellipse(flowerX, flowerY, width * 0.16, height * 0.045, index, 0, Math.PI * 2);
+        context.fill();
+      }
+    } else if (design.motif === "mosaic") {
+      context.strokeStyle = "rgba(255,255,255,.48)";
+      context.lineWidth = Math.max(1, width * 0.025);
+      for (let index = 0; index < 10; index += 1) {
+        context.fillStyle = colors[index % colors.length];
+        const cellX = x + (index % 3) * width * 0.34 - width * 0.02;
+        const cellY = y + Math.floor(index / 3) * height * 0.26 - height * 0.03;
+        context.fillRect(cellX, cellY, width * 0.36, height * 0.29);
+        context.strokeRect(cellX, cellY, width * 0.36, height * 0.29);
+      }
+    } else if (design.motif === "outline") {
+      context.strokeStyle = accent;
+      context.lineWidth = width * 0.13;
+      context.strokeRect(x + width * 0.07, y + height * 0.03, width * 0.86, height * 0.94);
+    }
+
+    if (design.finish === "gloss") {
+      const shine = context.createLinearGradient(x, y, x + width, y);
+      shine.addColorStop(0, "rgba(255,255,255,0)");
+      shine.addColorStop(0.38, "rgba(255,255,255,.34)");
+      shine.addColorStop(0.55, "rgba(255,255,255,0)");
+      context.fillStyle = shine;
+      context.fillRect(x, y, width, height);
+    } else if (design.finish === "jelly") {
+      context.fillStyle = "rgba(255,245,238,.2)";
+      context.fillRect(x, y, width, height);
+      context.strokeStyle = "rgba(255,255,255,.34)";
+      context.lineWidth = width * 0.05;
+      context.strokeRect(x + width * 0.08, y + height * 0.04, width * 0.84, height * 0.92);
+    } else if (design.finish === "chrome") {
+      const metal = context.createLinearGradient(x, y, x, y + height);
+      metal.addColorStop(0, "rgba(255,255,255,.5)");
+      metal.addColorStop(0.24, "rgba(255,255,255,0)");
+      metal.addColorStop(0.5, "rgba(8,12,18,.35)");
+      metal.addColorStop(0.68, "rgba(255,255,255,.58)");
+      metal.addColorStop(1, "rgba(0,0,0,.18)");
+      context.fillStyle = metal;
+      context.fillRect(x, y, width, height);
+    } else if (design.finish === "pearl") {
+      const pearl = context.createRadialGradient(x + width * 0.25, y + height * 0.3, 0, x + width * 0.45, y + height * 0.5, height * 0.7);
+      pearl.addColorStop(0, "rgba(174,228,226,.38)");
+      pearl.addColorStop(0.45, "rgba(255,255,255,.12)");
+      pearl.addColorStop(0.78, "rgba(235,166,217,.27)");
+      pearl.addColorStop(1, "rgba(255,226,163,.12)");
+      context.fillStyle = pearl;
+      context.fillRect(x, y, width, height);
+    } else if (design.finish === "glitter") {
+      for (let index = 0; index < 42; index += 1) {
+        context.globalAlpha = 0.38 + random() * 0.62;
+        context.fillStyle = index % 3 ? "#fff7d6" : highlight;
+        context.beginPath();
+        context.arc(x + random() * width, y + random() * height, width * (0.008 + random() * 0.025), 0, Math.PI * 2);
+        context.fill();
+      }
+      context.globalAlpha = 1;
+    } else if (design.finish === "cat-eye") {
+      const eye = context.createLinearGradient(x, y + height, x + width, y);
+      eye.addColorStop(0, "rgba(255,255,255,0)");
+      eye.addColorStop(0.42, "rgba(255,244,185,0)");
+      eye.addColorStop(0.5, "rgba(255,244,185,.72)");
+      eye.addColorStop(0.58, "rgba(255,244,185,0)");
+      eye.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = eye;
+      context.fillRect(x, y, width, height);
+    }
+  }
+
+  function drawNailAtlas(design) {
+    if (atlasCache.has(design.id)) return atlasCache.get(design.id);
+    const atlas = document.createElement("canvas");
+    atlas.width = 1280;
+    atlas.height = 256;
+    const context = atlas.getContext("2d");
+    for (let finger = 0; finger < 5; finger += 1) {
+      const cellX = finger * 256;
+      context.save();
+      context.beginPath();
+      context.rect(cellX, 0, 256, 256);
+      context.clip();
+      paintFinger(context, design, finger, cellX, 0, 256, 256);
+      context.restore();
+    }
+    atlasCache.set(design.id, atlas);
+    return atlas;
+  }
+
+  function nailPreviewPath(context, x, y, width, height) {
+    context.beginPath();
+    context.moveTo(x + width * 0.08, y + height);
+    context.lineTo(x + width * 0.02, y + height * 0.35);
+    context.bezierCurveTo(x, y + height * 0.09, x + width * 0.21, y, x + width / 2, y);
+    context.bezierCurveTo(x + width * 0.79, y, x + width, y + height * 0.09, x + width * 0.98, y + height * 0.35);
+    context.lineTo(x + width * 0.92, y + height);
+    context.quadraticCurveTo(x + width / 2, y + height * 0.94, x + width * 0.08, y + height);
+    context.closePath();
+  }
+
+  function drawFiveNailPreview(design) {
+    if (previewCache.has(design.id)) return previewCache.get(design.id);
+    const preview = document.createElement("canvas");
+    preview.width = 520;
+    preview.height = 176;
+    preview.className = "design-preview";
+    preview.setAttribute("aria-hidden", "true");
+    const context = preview.getContext("2d");
+    const widths = [72, 64, 68, 63, 55];
+    const heights = [126, 145, 158, 142, 112];
+    let x = 43;
+    for (let finger = 0; finger < 5; finger += 1) {
+      const y = 10 + (158 - heights[finger]);
+      context.save();
+      nailPreviewPath(context, x, y, widths[finger], heights[finger]);
+      context.clip();
+      paintFinger(context, design, finger, x, y, widths[finger], heights[finger]);
+      context.restore();
+      nailPreviewPath(context, x, y, widths[finger], heights[finger]);
+      context.strokeStyle = "rgba(38,32,29,.25)";
+      context.lineWidth = 2;
+      context.stroke();
+      x += widths[finger] + 18;
+    }
+    previewCache.set(design.id, preview);
+    return preview;
+  }
 
   function currentTheme() {
     return root.dataset.theme || (systemTheme.matches ? "dark" : "light");
@@ -41,19 +341,160 @@
   });
   updateThemeToggle();
 
-  document.querySelectorAll("[data-finish]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedFinish = button.dataset.finish;
-      document.querySelectorAll("[data-finish]").forEach((option) => {
-        const selected = option === button;
-        option.classList.toggle("is-selected", selected);
-        option.setAttribute("aria-pressed", String(selected));
+  const designGrid = document.querySelector("#design-grid");
+  const catalogCount = document.querySelector("#catalog-count");
+  const catalogEmpty = document.querySelector("#catalog-empty");
+  const selectedDesignName = document.querySelector("#selected-design-name");
+  const selectedDesignMeta = document.querySelector("#selected-design-meta");
+  const mobileCatalog = window.matchMedia("(max-width: 560px)");
+  let catalogScrollFrame = 0;
+  let catalogScrollTimer = 0;
+
+  function scrollToCard(card, behavior = reduceMotion.matches ? "auto" : "smooth") {
+    if (!mobileCatalog.matches || !card || card.hidden) return;
+    cancelAnimationFrame(catalogScrollFrame);
+    catalogScrollFrame = requestAnimationFrame(() => {
+      if (card.hidden) return;
+      const scrollRect = designGrid.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      designGrid.scrollTo({
+        left: designGrid.scrollLeft + cardRect.left - scrollRect.left,
+        behavior,
       });
-      document.querySelector("#selected-finish").textContent = finishNames[selectedFinish];
-      viewerApi?.setFinish(selectedFinish);
     });
+  }
+
+  function selectDesign(design, scroll = false) {
+    selectedDesign = design;
+    let selectedCard = null;
+    document.querySelectorAll(".design-card").forEach((card) => {
+      const selected = card.dataset.design === design.id;
+      card.classList.toggle("is-selected", selected);
+      card.setAttribute("aria-pressed", String(selected));
+      if (selected) selectedCard = card;
+    });
+    selectedDesignName.textContent = design.name;
+    selectedDesignMeta.textContent = `${label(design.style)} · ${label(design.finish)}`;
+    canvas.setAttribute("aria-label", `Interactive 3D view of a rigged hand wearing ${design.name}`);
+    viewerApi?.setDesign(design);
+    if (scroll) scrollToCard(selectedCard);
+  }
+
+  function visibleCards() {
+    return Array.from(document.querySelectorAll(".design-card:not([hidden])"));
+  }
+
+  function selectSettledCard() {
+    clearTimeout(catalogScrollTimer);
+    if (!mobileCatalog.matches) return;
+    const scrollLeft = designGrid.getBoundingClientRect().left;
+    const settledCard = visibleCards().reduce((closest, card) => (
+      !closest
+      || Math.abs(card.getBoundingClientRect().left - scrollLeft)
+        < Math.abs(closest.getBoundingClientRect().left - scrollLeft)
+        ? card
+        : closest
+    ), null);
+    if (!settledCard || settledCard.dataset.design === selectedDesign.id) return;
+    selectDesign(designById.get(settledCard.dataset.design));
+  }
+
+  designGrid.addEventListener("scroll", () => {
+    clearTimeout(catalogScrollTimer);
+    catalogScrollTimer = window.setTimeout(selectSettledCard, 140);
+  }, { passive: true });
+  if ("onscrollend" in designGrid) {
+    designGrid.addEventListener("scrollend", selectSettledCard);
+  }
+
+  mobileCatalog.addEventListener("change", () => {
+    clearTimeout(catalogScrollTimer);
+    cancelAnimationFrame(catalogScrollFrame);
+    if (mobileCatalog.matches) {
+      scrollToCard(document.querySelector(`.design-card[data-design="${selectedDesign.id}"]`), "auto");
+    } else {
+      designGrid.scrollTo({ left: 0, behavior: "auto" });
+    }
   });
 
+  function applyFilters() {
+    let visible = 0;
+    document.querySelectorAll(".design-card").forEach((card) => {
+      const design = designById.get(card.dataset.design);
+      const matches = (filters.style === "all" || design.style === filters.style)
+        && (filters.finish === "all" || design.finish === filters.finish);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    catalogCount.textContent = `${visible} design${visible === 1 ? "" : "s"}`;
+    catalogEmpty.hidden = visible !== 0;
+    const currentVisible = (filters.style === "all" || selectedDesign.style === filters.style)
+      && (filters.finish === "all" || selectedDesign.finish === filters.finish);
+    if (!currentVisible && visible) {
+      const firstDesign = designs.find((design) => (
+        (filters.style === "all" || design.style === filters.style)
+        && (filters.finish === "all" || design.finish === filters.finish)
+      ));
+      selectDesign(firstDesign);
+    }
+    scrollToCard(document.querySelector(`.design-card[data-design="${selectedDesign.id}"]`), "auto");
+  }
+
+  designs.forEach((design) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "design-card";
+    card.dataset.design = design.id;
+    card.setAttribute("aria-pressed", String(design === selectedDesign));
+    card.setAttribute("aria-label", `${design.name}, ${label(design.style)}, ${label(design.finish)}`);
+    card.append(drawFiveNailPreview(design));
+
+    const copy = document.createElement("span");
+    copy.className = "design-card-copy";
+    const name = document.createElement("strong");
+    name.textContent = design.name;
+    const tags = document.createElement("span");
+    tags.className = "design-tags";
+    [label(design.style), label(design.finish), label(design.motif)].forEach((text) => {
+      const tag = document.createElement("small");
+      tag.textContent = text;
+      tags.append(tag);
+    });
+    const check = document.createElement("span");
+    check.className = "design-check";
+    check.setAttribute("aria-hidden", "true");
+    check.textContent = "✓";
+    copy.append(name, tags, check);
+    card.append(copy);
+    card.addEventListener("click", () => selectDesign(design, true));
+    card.addEventListener("keydown", (event) => {
+      const cards = visibleCards();
+      const index = cards.indexOf(card);
+      const rowStep = mobileCatalog.matches ? 1 : 2;
+      const moves = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -rowStep, ArrowDown: rowStep };
+      let target = null;
+      if (event.key === "Home") target = cards[0];
+      else if (event.key === "End") target = cards[cards.length - 1];
+      else if (moves[event.key]) target = cards[Math.max(0, Math.min(cards.length - 1, index + moves[event.key]))];
+      if (!target || target === card) return;
+      event.preventDefault();
+      target.focus({ preventScroll: mobileCatalog.matches });
+      scrollToCard(target);
+    });
+    designGrid.append(card);
+  });
+  applyFilters();
+
+  document.querySelectorAll("[data-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const type = button.dataset.filter;
+      filters[type] = button.dataset.value;
+      document.querySelectorAll(`[data-filter="${type}"]`).forEach((pill) => {
+        pill.setAttribute("aria-pressed", String(pill === button));
+      });
+      applyFilters();
+    });
+  });
   document.querySelectorAll("[data-view-action]").forEach((button) => {
     button.addEventListener("click", () => viewerApi?.action(button.dataset.viewAction));
   });
@@ -63,6 +504,7 @@
   const loadingState = document.querySelector("#loading-state");
   const fallback = document.querySelector("#viewer-fallback");
   const status = document.querySelector("#viewer-status");
+  selectDesign(selectedDesign);
 
   viewport.addEventListener("contextmenu", (event) => event.preventDefault());
 
@@ -392,39 +834,6 @@
     return buffer;
   }
 
-  function drawNailFinish(name) {
-    const textureCanvas = document.createElement("canvas");
-    textureCanvas.width = 256;
-    textureCanvas.height = 256;
-    const context = textureCanvas.getContext("2d");
-    if (name === "checkerboard") {
-      const squareSize = 32;
-      for (let y = 0; y < 256; y += squareSize) {
-        for (let x = 0; x < 256; x += squareSize) {
-          context.fillStyle = (x / squareSize + y / squareSize) % 2 === 0 ? "#ffffff" : "#171717";
-          context.fillRect(x, y, squareSize, squareSize);
-        }
-      }
-    } else if (name === "color-gradient") {
-      const gradient = context.createLinearGradient(0, 0, 256, 256);
-      gradient.addColorStop(0, "#ff3b30");
-      gradient.addColorStop(0.2, "#ffcc00");
-      gradient.addColorStop(0.4, "#34c759");
-      gradient.addColorStop(0.6, "#00c7be");
-      gradient.addColorStop(0.8, "#007aff");
-      gradient.addColorStop(1, "#af52de");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, 256, 256);
-    } else {
-      const gradient = context.createLinearGradient(0, 0, 256, 256);
-      gradient.addColorStop(0, "#ffffff");
-      gradient.addColorStop(1, "#000000");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, 256, 256);
-    }
-    return textureCanvas;
-  }
-
   function decodeImage(blob) {
     if ("createImageBitmap" in window) return createImageBitmap(blob);
     return new Promise((resolve, reject) => {
@@ -508,6 +917,7 @@
       in vec3 v_position;
       uniform sampler2D u_skinTexture;
       uniform sampler2D u_nailTexture;
+      uniform int u_nailFinish;
       out vec4 outColor;
 
       const int NAIL_COUNT = 5;
@@ -529,20 +939,63 @@
 
         bool isNail = false;
         vec2 localUv = vec2(0.0);
+        int fingerIndex = 0;
         for (int i = 0; i < NAIL_COUNT; i += 1) {
           vec4 rect = NAIL_UV_RECTS[i];
           if (v_uv.x >= rect.x && v_uv.x <= rect.z && v_uv.y >= rect.y && v_uv.y <= rect.w) {
             localUv = (v_uv - rect.xy) / (rect.zw - rect.xy);
+            fingerIndex = i;
             isNail = true;
           }
         }
 
         vec3 color;
         if (isNail) {
-          vec3 base = texture(u_nailTexture, localUv).rgb;
+          vec2 cellUv = mix(vec2(0.5 / 256.0), vec2(255.5 / 256.0), clamp(localUv, 0.0, 1.0));
+          vec2 atlasUv = vec2((float(fingerIndex) + cellUv.x) / 5.0, cellUv.y);
+          vec3 base = texture(u_nailTexture, atlasUv).rgb;
           vec3 halfVector = normalize(key + viewDirection);
-          float gloss = pow(max(dot(normal, halfVector), 0.0), 62.0);
-          color = base * (0.48 + diffuse * 0.66) + vec3(1.0) * gloss * 0.68 + vec3(0.72, 0.78, 1.0) * rim * 0.22;
+          float specularPower = 62.0;
+          float specularStrength = 0.68;
+          float diffuseStrength = 0.66;
+          if (u_nailFinish == 1) {
+            specularPower = 14.0;
+            specularStrength = 0.08;
+            diffuseStrength = 0.52;
+          } else if (u_nailFinish == 2) {
+            specularPower = 48.0;
+            specularStrength = 0.42;
+            base = mix(base, vec3(0.98, 0.83, 0.78), 0.12);
+          } else if (u_nailFinish == 3) {
+            specularPower = 118.0;
+            specularStrength = 1.05;
+            diffuseStrength = 0.34;
+          } else if (u_nailFinish == 4) {
+            specularPower = 42.0;
+            specularStrength = 0.5;
+          } else if (u_nailFinish == 5) {
+            specularPower = 82.0;
+            specularStrength = 0.78;
+          } else if (u_nailFinish == 6) {
+            specularPower = 92.0;
+            specularStrength = 0.72;
+          }
+          float gloss = pow(max(dot(normal, halfVector), 0.0), specularPower);
+          color = base * (0.48 + diffuse * diffuseStrength) + vec3(1.0) * gloss * specularStrength;
+          if (u_nailFinish == 3) {
+            float metalBand = smoothstep(0.18, 0.8, abs(normal.y * 0.8 + normal.x * 0.35));
+            color = mix(color, vec3(dot(base, vec3(0.3, 0.56, 0.14))), 0.22) + vec3(metalBand * 0.24);
+          } else if (u_nailFinish == 4) {
+            vec3 pearlShift = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + rim * 5.0 + localUv.y * 2.0);
+            color += pearlShift * rim * 0.28;
+          } else if (u_nailFinish == 5) {
+            float sparkle = pow(max(0.0, sin(localUv.x * 267.0 + localUv.y * 193.0)), 24.0);
+            color += vec3(sparkle * (0.14 + gloss * 0.5));
+          } else if (u_nailFinish == 6) {
+            float eyeBand = pow(max(0.0, 1.0 - abs(localUv.x + localUv.y * 0.34 - 0.68) * 5.2), 2.0);
+            color += vec3(1.0, 0.82, 0.42) * eyeBand * (0.16 + rim * 0.38);
+          }
+          color += vec3(0.72, 0.78, 1.0) * rim * (u_nailFinish == 1 ? 0.06 : 0.22);
         } else {
           vec3 base = texture(u_skinTexture, v_uv).rgb;
           base = mix(base, vec3(0.96, 0.72, 0.62), 0.055);
@@ -553,6 +1006,15 @@
     `;
 
     const skinProgram = compileProgram(gl, skinVertex, skinFragment);
+    const skinUniforms = {
+      projection: gl.getUniformLocation(skinProgram, "u_projection"),
+      view: gl.getUniformLocation(skinProgram, "u_view"),
+      viewer: gl.getUniformLocation(skinProgram, "u_viewer"),
+      bones: gl.getUniformLocation(skinProgram, "u_bones"),
+      skinTexture: gl.getUniformLocation(skinProgram, "u_skinTexture"),
+      nailTexture: gl.getUniformLocation(skinProgram, "u_nailTexture"),
+      nailFinish: gl.getUniformLocation(skinProgram, "u_nailFinish"),
+    };
 
     const positionData = readAccessor(primitive.attributes.POSITION);
     const jointData = readAccessor(primitive.attributes.JOINTS_0);
@@ -593,19 +1055,20 @@
     }
 
     const nailTexture = gl.createTexture();
-    function setFinish(name) {
-      const textureCanvas = drawNailFinish(name);
+    let activeFinishCode = finishCodes[selectedDesign.finish];
+    function setDesign(design) {
+      const textureCanvas = drawNailAtlas(design);
+      activeFinishCode = finishCodes[design.finish];
       gl.bindTexture(gl.TEXTURE_2D, nailTexture);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureCanvas);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     }
-    setFinish(selectedFinish);
+    setDesign(selectedDesign);
 
     const nodes = json.nodes;
     const parent = new Int16Array(nodes.length).fill(-1);
@@ -624,6 +1087,7 @@
     }));
     const localMatrices = nodes.map(() => M.identity());
     const worldMatrices = nodes.map(() => M.identity());
+    const visiting = new Uint8Array(nodes.length);
 
     const animation = json.animations?.[0];
     const tracks = animation ? animation.channels.map((channel) => {
@@ -666,7 +1130,7 @@
       tracks.forEach((track) => {
         pose[track.node][track.path] = sampleTrack(track, time);
       });
-      const visiting = new Uint8Array(nodes.length);
+      visiting.fill(0);
       function updateNode(index) {
         if (visiting[index] === 2) return;
         if (visiting[index] === 1) throw new Error("The hand rig contains a node cycle.");
@@ -898,16 +1362,17 @@
 
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.useProgram(skinProgram);
-      gl.uniformMatrix4fv(gl.getUniformLocation(skinProgram, "u_projection"), false, projection);
-      gl.uniformMatrix4fv(gl.getUniformLocation(skinProgram, "u_view"), false, view);
-      gl.uniformMatrix4fv(gl.getUniformLocation(skinProgram, "u_viewer"), false, viewerMatrix);
-      gl.uniform1i(gl.getUniformLocation(skinProgram, "u_bones"), 0);
+      gl.uniformMatrix4fv(skinUniforms.projection, false, projection);
+      gl.uniformMatrix4fv(skinUniforms.view, false, view);
+      gl.uniformMatrix4fv(skinUniforms.viewer, false, viewerMatrix);
+      gl.uniform1i(skinUniforms.bones, 0);
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, skinTexture);
-      gl.uniform1i(gl.getUniformLocation(skinProgram, "u_skinTexture"), 1);
+      gl.uniform1i(skinUniforms.skinTexture, 1);
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, nailTexture);
-      gl.uniform1i(gl.getUniformLocation(skinProgram, "u_nailTexture"), 2);
+      gl.uniform1i(skinUniforms.nailTexture, 2);
+      gl.uniform1i(skinUniforms.nailFinish, activeFinishCode);
       gl.bindVertexArray(skinVao);
       gl.drawElements(gl.TRIANGLES, indexData.length, skinIndexType, 0);
       gl.bindVertexArray(null);
@@ -915,7 +1380,7 @@
     }
 
     requestAnimationFrame(render);
-    return { setFinish, action, jointCount: skin.joints.length, nailCount: nailRegionNames.length };
+    return { setDesign, action, jointCount: skin.joints.length, nailCount: nailRegionNames.length };
   }
 
   createViewer()

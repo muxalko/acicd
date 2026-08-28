@@ -55,6 +55,10 @@
           <div>
             <p class="eyebrow">Interactive preview</p>
             <h2 id="viewer-heading">Your hand, in motion.</h2>
+            <p class="current-design" aria-live="polite" aria-atomic="true">
+              Wearing <strong id="selected-design-name">Studio Rouge</strong>
+              <span id="selected-design-meta">Solid · Gloss</span>
+            </p>
           </div>
           <div class="viewer-badges" role="group" aria-label="Viewer features">
             <span><i aria-hidden="true"></i> Real-time</span>
@@ -114,47 +118,68 @@
 
       <aside class="design-panel" aria-labelledby="design-title">
         <div class="design-intro">
-          <p class="eyebrow">Atelier / 001</p>
-          <h1 id="design-title">Shape your<br /><em>signature.</em></h1>
-          <p>Three finishes, one expressive canvas. Rotate the hand and find the light that makes it yours.</p>
+          <div>
+            <p class="eyebrow">The design library</p>
+            <h1 id="design-title">Find your <em>signature.</em></h1>
+          </div>
+          <p>Original five-nail stories, composed finger by finger.</p>
         </div>
 
-        <fieldset class="finish-picker">
-          <legend>Choose a finish</legend>
-          <button class="finish-option is-selected" type="button" data-finish="checkerboard" aria-pressed="true">
-            <span class="finish-swatch swatch-checkerboard" aria-hidden="true"></span>
-            <span><strong>Checkerboard</strong><small>Texture / 01</small></span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12 3 3 7-7" /></svg>
-          </button>
-          <button class="finish-option" type="button" data-finish="color-gradient" aria-pressed="false">
-            <span class="finish-swatch swatch-color-gradient" aria-hidden="true"></span>
-            <span><strong>Color gradient</strong><small>Texture / 02</small></span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12 3 3 7-7" /></svg>
-          </button>
-          <button class="finish-option" type="button" data-finish="grayscale-gradient" aria-pressed="false">
-            <span class="finish-swatch swatch-grayscale-gradient" aria-hidden="true"></span>
-            <span><strong>Grayscale gradient</strong><small>Texture / 03</small></span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12 3 3 7-7" /></svg>
-          </button>
-        </fieldset>
-
-        <div class="model-notes">
-          <div><span>Model</span><strong>Rigged right hand</strong></div>
-          <div><span>Finish</span><strong id="selected-finish">Checkerboard</strong></div>
-          <div><span>Motion</span><strong>Subtle pose study</strong></div>
+        <div class="catalog-filters" aria-label="Filter nail designs">
+          <fieldset class="filter-group" data-filter-group="style">
+            <legend>Style</legend>
+            <div class="pill-row">
+              <button type="button" data-filter="style" data-value="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="style" data-value="solid" aria-pressed="false">Solid</button>
+              <button type="button" data-filter="style" data-value="classic" aria-pressed="false">Classic</button>
+              <button type="button" data-filter="style" data-value="artistic" aria-pressed="false">Artistic</button>
+            </div>
+          </fieldset>
+          <fieldset class="filter-group" data-filter-group="finish">
+            <legend>Finish</legend>
+            <div class="pill-row">
+              <button type="button" data-filter="finish" data-value="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="finish" data-value="gloss" aria-pressed="false">Gloss</button>
+              <button type="button" data-filter="finish" data-value="matte" aria-pressed="false">Matte</button>
+              <button type="button" data-filter="finish" data-value="jelly" aria-pressed="false">Jelly</button>
+              <button type="button" data-filter="finish" data-value="chrome" aria-pressed="false">Chrome</button>
+              <button type="button" data-filter="finish" data-value="pearl" aria-pressed="false">Pearl</button>
+              <button type="button" data-filter="finish" data-value="glitter" aria-pressed="false">Glitter</button>
+              <button type="button" data-filter="finish" data-value="cat-eye" aria-pressed="false">Cat-eye</button>
+            </div>
+          </fieldset>
         </div>
 
-        <p class="attribution">
-          3D model: <a href="https://sketchfab.com/3d-models/rigged-hand-eae97cc2a742413cb5338ab942b12c1e">“Rigged hand”</a>
-          by <a href="https://sketchfab.com/elenaferfor">Elena FF</a>,
-          <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
-          <a href="/assets/models/rigged-hand-license.txt">License details</a>.
-        </p>
+        <div class="catalog-result-bar">
+          <p id="catalog-count" aria-live="polite">40 designs</p>
+          <span>Five nails / one set</span>
+        </div>
+
+        <div class="catalog-scroll" id="catalog-scroll" role="region" tabindex="0" aria-label="Nail design catalog">
+          <div class="design-grid" id="design-grid">
+            <noscript>
+              <section class="catalog-no-script" aria-labelledby="catalog-no-script-title">
+                <h2 id="catalog-no-script-title">40 designs across three collections</h2>
+                <p>Enable JavaScript to browse and preview each five-nail set.</p>
+                <p><strong>Styles:</strong> solid, classic, and artistic.</p>
+                <p><strong>Finishes:</strong> gloss, matte, jelly, chrome, pearl, glitter, and cat-eye.</p>
+              </section>
+            </noscript>
+          </div>
+          <p class="catalog-empty" id="catalog-empty" hidden>No designs match both filters.</p>
+
+          <p class="attribution">
+            3D model: <a href="https://sketchfab.com/3d-models/rigged-hand-eae97cc2a742413cb5338ab942b12c1e">“Rigged hand”</a>
+            by <a href="https://sketchfab.com/elenaferfor">Elena FF</a>,
+            <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+            <a href="/assets/models/rigged-hand-license.txt">License details</a>.
+          </p>
+        </div>
       </aside>
     </main>
 
     <noscript>
-      <p class="noscript-note">JavaScript is required for the interactive 3D preview. The model attribution and finish descriptions remain available above.</p>
+      <p class="noscript-note">JavaScript is required for the interactive catalog and 3D preview. A catalog summary, finish list, and model attribution remain available above.</p>
     </noscript>
 
     <script src="/script.js"></script>
