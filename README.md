@@ -1,6 +1,22 @@
-# Cloudflare Pages starter
+# Forme 3D Hand Viewer
 
-A simple static site with no build step.
+A polished, framework-free nail-art mockup with a real rigged hand rendered from
+a same-origin GLB. It uses a small purpose-built WebGL 2 renderer, so the page
+has no runtime packages, CDN imports, or build step.
+
+The renderer reads the model's skinned mesh, 69-joint skeleton, inverse bind
+matrices, and `Open/Close` animation. Five separate procedural nail meshes are
+attached to the weighted distal finger bones. Nail finishes use their own shader,
+material, and generated texture; the original skin texture is bound only to the
+hand shader and is never modified by finish selection.
+
+## Model credit
+
+This work uses [“Rigged hand”](https://sketchfab.com/3d-models/rigged-hand-eae97cc2a742413cb5338ab942b12c1e)
+by [Elena FF](https://sketchfab.com/elenaferfor), licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The supplied
+GLB is vendored unmodified at `public/assets/models/rigged-hand.glb`; the full
+attribution is available beside it in `rigged-hand-license.txt` and in the UI.
 
 ## Develop locally
 
@@ -32,7 +48,8 @@ Wrangler will ask you to create or choose a Cloudflare Pages project.
 4. Leave the build command empty and set the output directory to `public`.
 5. Deploy.
 
-Edit `public/index.html` for the content and `public/styles.css` for the design.
+Edit `public/index.html` for the structure, `public/styles.css` for the design,
+and `public/script.js` for the viewer and interactions.
 
 ## Contributing
 
