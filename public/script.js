@@ -140,7 +140,7 @@
     rotationZ(angle) {
       const c = Math.cos(angle);
       const s = Math.sin(angle);
-      return new Float32Array([c, s, 0, 0, -s, c, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+      return new Float32Array([c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     },
 
     invert(a) {
@@ -246,6 +246,43 @@
     const one = Math.sin((1 - t) * theta) / sinTheta;
     const two = Math.sin(t * theta) / sinTheta;
     return a.map((value, index) => value * one + end[index] * two);
+  }
+
+  function quatFromAxisAngle(axis, angle) {
+    const half = angle / 2;
+    const s = Math.sin(half);
+    return [axis[0] * s, axis[1] * s, axis[2] * s, Math.cos(half)];
+  }
+
+  function quatMultiply(a, b) {
+    const [ax, ay, az, aw] = a;
+    const [bx, by, bz, bw] = b;
+    return [
+      aw * bx + ax * bw + ay * bz - az * by,
+      aw * by - ax * bz + ay * bw + az * bx,
+      aw * bz + ax * by - ay * bx + az * bw,
+      aw * bw - ax * bx - ay * by - az * bz,
+    ];
+  }
+
+  function quatNormalize(q) {
+    const length = Math.hypot(q[0], q[1], q[2], q[3]) || 1;
+    return [q[0] / length, q[1] / length, q[2] / length, q[3] / length];
+  }
+
+  function quatRotateVector(q, v) {
+    const qx = q[0], qy = q[1], qz = q[2], qw = q[3];
+    const uvx = qy * v[2] - qz * v[1];
+    const uvy = qz * v[0] - qx * v[2];
+    const uvz = qx * v[1] - qy * v[0];
+    const uuvx = qy * uvz - qz * uvy;
+    const uuvy = qz * uvx - qx * uvz;
+    const uuvz = qx * uvy - qy * uvx;
+    return [
+      v[0] + (uvx * qw + uuvx) * 2,
+      v[1] + (uvy * qw + uuvy) * 2,
+      v[2] + (uvz * qw + uuvz) * 2,
+    ];
   }
 
   const accessorTypes = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
@@ -355,50 +392,6 @@
     return buffer;
   }
 
-  function makeNailGeometry() {
-    const across = 20;
-    const along = 24;
-    const positions = [];
-    const normals = [];
-    const uvs = [];
-    const indices = [];
-    for (let yIndex = 0; yIndex <= along; yIndex += 1) {
-      const v = yIndex / along;
-      const y = v - 0.5;
-      const taper = 0.78 + 0.22 * Math.sin(v * Math.PI);
-      for (let xIndex = 0; xIndex <= across; xIndex += 1) {
-        const u = xIndex / across;
-        const xUnit = u * 2 - 1;
-        const x = xUnit * 0.5 * taper;
-        const crown = Math.sqrt(Math.max(0, 1 - xUnit * xUnit));
-        const tipCurve = 1 - 0.1 * Math.pow(Math.abs(y) * 2, 2);
-        const z = crown * 0.78 * tipCurve;
-        positions.push(x, y, z);
-        const nx = xUnit * 0.75;
-        const nz = Math.max(0.32, crown);
-        const length = Math.hypot(nx, nz);
-        normals.push(nx / length, 0.06 * (0.5 - v), nz / length);
-        uvs.push(u, v);
-      }
-    }
-    const row = across + 1;
-    for (let yIndex = 0; yIndex < along; yIndex += 1) {
-      for (let xIndex = 0; xIndex < across; xIndex += 1) {
-        const a = yIndex * row + xIndex;
-        const b = a + 1;
-        const c = a + row;
-        const d = c + 1;
-        indices.push(a, c, b, b, c, d);
-      }
-    }
-    return {
-      positions: new Float32Array(positions),
-      normals: new Float32Array(normals),
-      uvs: new Float32Array(uvs),
-      indices: new Uint16Array(indices),
-    };
-  }
-
   function drawNailFinish(name) {
     const textureCanvas = document.createElement("canvas");
     textureCanvas.width = 256;
@@ -505,93 +498,77 @@
       }
     `;
 
+    // Nail UV islands: each rectangle is a region of the shared skin UV map
+    // that is remapped to local 0..1 coordinates and sampled from the dynamic
+    // nail texture instead of the skin texture.
     const skinFragment = `#version 300 es
       precision highp float;
       in vec2 v_uv;
       in vec3 v_normal;
       in vec3 v_position;
       uniform sampler2D u_skinTexture;
+      uniform sampler2D u_nailTexture;
       out vec4 outColor;
+
+      const int NAIL_COUNT = 5;
+      const vec4 NAIL_UV_RECTS[NAIL_COUNT] = vec4[NAIL_COUNT](
+        vec4(0.7237607241, 0.3519485891, 0.7907230854, 0.4083442986),
+        vec4(0.7300586700, 0.2282793373, 0.7766602039, 0.2878110707),
+        vec4(0.8480325937, 0.3488490283, 0.8956496119, 0.4065266252),
+        vec4(0.8529052138, 0.2294050008, 0.8949750662, 0.2841750085),
+        vec4(0.7338642478, 0.1401616335, 0.7712491155, 0.1821782440)
+      );
+
       void main() {
-        vec3 base = texture(u_skinTexture, v_uv).rgb;
-        base = mix(base, vec3(0.96, 0.72, 0.62), 0.055);
         vec3 normal = normalize(v_normal);
         vec3 key = normalize(vec3(-0.42, 0.82, 0.58));
         vec3 fill = normalize(vec3(0.72, 0.15, 0.68));
         float diffuse = max(dot(normal, key), 0.0) * 0.72 + max(dot(normal, fill), 0.0) * 0.22;
-        float rim = pow(1.0 - abs(dot(normal, normalize(vec3(0.0, 0.0, 4.0) - v_position))), 2.4);
-        vec3 color = base * (0.47 + diffuse) + vec3(0.24, 0.18, 0.25) * rim * 0.18;
+        vec3 viewDirection = normalize(vec3(0.0, 0.0, 4.0) - v_position);
+        float rim = pow(1.0 - abs(dot(normal, viewDirection)), 2.4);
+
+        bool isNail = false;
+        vec2 localUv = vec2(0.0);
+        for (int i = 0; i < NAIL_COUNT; i += 1) {
+          vec4 rect = NAIL_UV_RECTS[i];
+          if (v_uv.x >= rect.x && v_uv.x <= rect.z && v_uv.y >= rect.y && v_uv.y <= rect.w) {
+            localUv = (v_uv - rect.xy) / (rect.zw - rect.xy);
+            isNail = true;
+          }
+        }
+
+        vec3 color;
+        if (isNail) {
+          vec3 base = texture(u_nailTexture, localUv).rgb;
+          vec3 halfVector = normalize(key + viewDirection);
+          float gloss = pow(max(dot(normal, halfVector), 0.0), 62.0);
+          color = base * (0.48 + diffuse * 0.66) + vec3(1.0) * gloss * 0.68 + vec3(0.72, 0.78, 1.0) * rim * 0.22;
+        } else {
+          vec3 base = texture(u_skinTexture, v_uv).rgb;
+          base = mix(base, vec3(0.96, 0.72, 0.62), 0.055);
+          color = base * (0.47 + diffuse) + vec3(0.24, 0.18, 0.25) * rim * 0.18;
+        }
         outColor = vec4(pow(color, vec3(0.92)), 1.0);
       }
     `;
 
-    const nailVertex = `#version 300 es
-      precision highp float;
-      layout(location=0) in vec3 a_position;
-      layout(location=1) in vec3 a_normal;
-      layout(location=2) in vec2 a_uv;
-      uniform mat4 u_projection;
-      uniform mat4 u_view;
-      uniform mat4 u_model;
-      out vec2 v_uv;
-      out vec3 v_normal;
-      out vec3 v_position;
-      void main() {
-        vec4 world = u_model * vec4(a_position, 1.0);
-        v_position = world.xyz;
-        v_normal = normalize(mat3(u_model) * a_normal);
-        v_uv = a_uv;
-        gl_Position = u_projection * u_view * world;
-      }
-    `;
-
-    const nailFragment = `#version 300 es
-      precision highp float;
-      in vec2 v_uv;
-      in vec3 v_normal;
-      in vec3 v_position;
-      uniform sampler2D u_nailTexture;
-      out vec4 outColor;
-      void main() {
-        vec3 base = texture(u_nailTexture, v_uv).rgb;
-        vec3 normal = normalize(v_normal);
-        vec3 light = normalize(vec3(-0.45, 0.8, 0.65));
-        vec3 viewDirection = normalize(vec3(0.0, 0.0, 4.0) - v_position);
-        vec3 halfVector = normalize(light + viewDirection);
-        float diffuse = max(dot(normal, light), 0.0);
-        float gloss = pow(max(dot(normal, halfVector), 0.0), 62.0);
-        float edge = pow(1.0 - abs(dot(normal, viewDirection)), 3.0);
-        vec3 color = base * (0.48 + diffuse * 0.66) + vec3(1.0) * gloss * 0.68 + vec3(0.72, 0.78, 1.0) * edge * 0.22;
-        outColor = vec4(color, 1.0);
-      }
-    `;
-
     const skinProgram = compileProgram(gl, skinVertex, skinFragment);
-    const nailProgram = compileProgram(gl, nailVertex, nailFragment);
 
+    const positionData = readAccessor(primitive.attributes.POSITION);
+    const jointData = readAccessor(primitive.attributes.JOINTS_0);
+    const weightData = readAccessor(primitive.attributes.WEIGHTS_0);
     const skinVao = gl.createVertexArray();
     gl.bindVertexArray(skinVao);
-    uploadAttribute(gl, 0, readAccessor(primitive.attributes.POSITION), 3, false);
+    uploadAttribute(gl, 0, positionData, 3, false);
     uploadAttribute(gl, 1, readAccessor(primitive.attributes.NORMAL), 3, false);
     uploadAttribute(gl, 2, readAccessor(primitive.attributes.TEXCOORD_0), 2, false);
-    uploadAttribute(gl, 3, readAccessor(primitive.attributes.JOINTS_0), 4, true);
-    uploadAttribute(gl, 4, readAccessor(primitive.attributes.WEIGHTS_0), 4, false);
+    uploadAttribute(gl, 3, jointData, 4, true);
+    uploadAttribute(gl, 4, weightData, 4, false);
     const indexData = readAccessor(primitive.indices);
     const skinIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skinIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
     const skinIndexType = indexData instanceof Uint32Array ? gl.UNSIGNED_INT : indexData instanceof Uint16Array ? gl.UNSIGNED_SHORT : gl.UNSIGNED_BYTE;
-
-    const nailGeometry = makeNailGeometry();
-    const nailVao = gl.createVertexArray();
-    gl.bindVertexArray(nailVao);
-    uploadAttribute(gl, 0, nailGeometry.positions, 3, false);
-    uploadAttribute(gl, 1, nailGeometry.normals, 3, false);
-    uploadAttribute(gl, 2, nailGeometry.uvs, 2, false);
-    const nailIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, nailIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, nailGeometry.indices, gl.STATIC_DRAW);
-    gl.bindVertexArray(null);
 
     const skinTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, skinTexture);
@@ -708,18 +685,36 @@
     }
     updatePose(animationDuration * 0.1);
 
-    const meshNodeIndex = nodes.findIndex((node) => node.mesh === 0);
-    const positionAccessor = json.accessors[primitive.attributes.POSITION];
-    const min = positionAccessor.min;
-    const max = positionAccessor.max;
-    const transformedCorners = [];
-    for (const x of [min[0], max[0]]) {
-      for (const y of [min[1], max[1]]) {
-        for (const z of [min[2], max[2]]) transformedCorners.push(M.point(worldMatrices[meshNodeIndex], [x, y, z]));
+    const skin = json.skins[0];
+    const inverseBindData = readAccessor(skin.inverseBindMatrices);
+    const jointMatrices = new Float32Array(skin.joints.length * 16);
+    skin.joints.forEach((nodeIndex, jointIndex) => {
+      const inverseBind = inverseBindData.subarray(jointIndex * 16, jointIndex * 16 + 16);
+      jointMatrices.set(M.multiply(worldMatrices[nodeIndex], inverseBind), jointIndex * 16);
+    });
+
+    const worldMin = [Infinity, Infinity, Infinity];
+    const worldMax = [-Infinity, -Infinity, -Infinity];
+    for (let vertex = 0; vertex < positionData.length / 3; vertex += 1) {
+      const position = positionData.subarray(vertex * 3, vertex * 3 + 3);
+      const weightOffset = vertex * 4;
+      const weightTotal = Math.max(
+        weightData[weightOffset] + weightData[weightOffset + 1] + weightData[weightOffset + 2] + weightData[weightOffset + 3],
+        0.0001,
+      );
+      const skinned = [0, 0, 0];
+      for (let influence = 0; influence < 4; influence += 1) {
+        const jointIndex = jointData[weightOffset + influence];
+        const matrix = jointMatrices.subarray(jointIndex * 16, jointIndex * 16 + 16);
+        const point = M.point(matrix, position);
+        const weight = weightData[weightOffset + influence] / weightTotal;
+        for (let axis = 0; axis < 3; axis += 1) skinned[axis] += point[axis] * weight;
+      }
+      for (let axis = 0; axis < 3; axis += 1) {
+        worldMin[axis] = Math.min(worldMin[axis], skinned[axis]);
+        worldMax[axis] = Math.max(worldMax[axis], skinned[axis]);
       }
     }
-    const worldMin = [0, 1, 2].map((axis) => Math.min(...transformedCorners.map((point) => point[axis])));
-    const worldMax = [0, 1, 2].map((axis) => Math.max(...transformedCorners.map((point) => point[axis])));
     const center = worldMin.map((value, axis) => (value + worldMax[axis]) / 2);
     const extent = Math.max(...worldMax.map((value, axis) => value - worldMin[axis]));
     const modelScale = 2.55 / extent;
@@ -728,9 +723,6 @@
       M.multiply(M.rotationX(Math.PI / 2), M.translation(-center[0], -center[1], -center[2])),
     );
 
-    const skin = json.skins[0];
-    const inverseBindData = readAccessor(skin.inverseBindMatrices);
-    const jointMatrices = new Float32Array(skin.joints.length * 16);
     const boneTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, boneTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 4, skin.joints.length, 0, gl.RGBA, gl.FLOAT, jointMatrices);
@@ -739,50 +731,47 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    // Each plate is its own mesh, aligned in the weighted distal-bone space.
-    // The positive local Z offsets sit just above the dorsal skin surface.
-    const nailSpecs = [
-      ["thumb_03.R_010", 0.092, 0.116, 0.022, -0.021, 0.143, 0.067],
-      ["index_03.R_019", 0.078, 0.101, 0.019, -0.019, 0.132, 0.059],
-      ["middle_03.R_027", 0.087, 0.126, 0.02, -0.026, 0.172, 0.061],
-      ["ring_03.R_035", 0.077, 0.108, 0.019, -0.021, 0.145, 0.058],
-      ["pinky_03.R_043", 0.062, 0.081, 0.016, -0.022, 0.098, 0.038],
-    ];
-    const nailMeshes = nailSpecs.map(([boneName, width, length, depth, x, y, z]) => {
-      const boneIndex = nodes.findIndex((node) => node.name === boneName);
-      if (boneIndex < 0) throw new Error(`The rig is missing ${boneName}.`);
-      return {
-        name: `nail-${boneName.split("_")[0]}`,
-        boneIndex,
-        localMatrix: M.multiply(M.translation(x, y, z), M.scale(width, length, depth)),
-      };
-    });
+    // Nail regions are painted directly in the skin fragment shader by
+    // remapping fixed UV islands (see NAIL_UV_RECTS above) to local 0..1
+    // coordinates and sampling the dynamic nail texture there.
+    const nailRegionNames = ["thumb", "index", "middle", "ring", "pinky"];
 
+    const initialYaw = 0.18;
+    const initialPitch = 0.08;
+    const initialDistance = 4.15;
+    const initialQuat = quatNormalize(
+      quatMultiply(
+        quatFromAxisAngle([0, 1, 0], initialYaw),
+        quatFromAxisAngle([1, 0, 0], -initialPitch),
+      ),
+    );
     const camera = {
-      yaw: 0.18,
-      pitch: 0.08,
-      distance: 4.15,
-      targetYaw: 0.18,
-      targetPitch: 0.08,
-      targetDistance: 4.15,
+      quat: initialQuat,
+      targetQuat: initialQuat,
+      distance: initialDistance,
+      targetDistance: initialDistance,
+      pan: [0, 0, 0],
+      targetPan: [0, 0, 0],
     };
     const distanceLimits = [2.75, 5.8];
-    const pitchLimits = [-0.85, 0.85];
 
     function clampCamera() {
-      camera.targetPitch = Math.max(pitchLimits[0], Math.min(pitchLimits[1], camera.targetPitch));
       camera.targetDistance = Math.max(distanceLimits[0], Math.min(distanceLimits[1], camera.targetDistance));
     }
 
     function action(name) {
-      if (name === "left") camera.targetYaw -= 0.22;
-      if (name === "right") camera.targetYaw += 0.22;
+      if (name === "left") {
+        camera.targetQuat = quatNormalize(quatMultiply(quatFromAxisAngle([0, 1, 0], -0.22), camera.targetQuat));
+      }
+      if (name === "right") {
+        camera.targetQuat = quatNormalize(quatMultiply(quatFromAxisAngle([0, 1, 0], 0.22), camera.targetQuat));
+      }
       if (name === "in") camera.targetDistance -= 0.35;
       if (name === "out") camera.targetDistance += 0.35;
       if (name === "reset") {
-        camera.targetYaw = 0.18;
-        camera.targetPitch = 0.08;
-        camera.targetDistance = 4.15;
+        camera.targetQuat = initialQuat;
+        camera.targetDistance = initialDistance;
+        camera.targetPan = [0, 0, 0];
       }
       clampCamera();
     }
@@ -799,10 +788,23 @@
       const dx = event.clientX - drag.x;
       const dy = event.clientY - drag.y;
       if (drag.button === 2) {
-        camera.targetDistance += dy * 0.009;
+        const rightWorld = quatRotateVector(camera.targetQuat, [1, 0, 0]);
+        const upWorld = quatRotateVector(camera.targetQuat, [0, 1, 0]);
+        const panScale = camera.targetDistance * 0.0016;
+        camera.targetPan = [
+          camera.targetPan[0] + (rightWorld[0] * -dx + upWorld[0] * dy) * panScale,
+          camera.targetPan[1] + (rightWorld[1] * -dx + upWorld[1] * dy) * panScale,
+          camera.targetPan[2] + (rightWorld[2] * -dx + upWorld[2] * dy) * panScale,
+        ];
       } else {
-        camera.targetYaw += dx * 0.009;
-        camera.targetPitch += dy * 0.007;
+        const dragLength = Math.hypot(dx, dy);
+        if (dragLength > 0) {
+          const localAxis = [-dy / dragLength, -dx / dragLength, 0];
+          const worldAxis = quatRotateVector(camera.targetQuat, localAxis);
+          const angle = dragLength * 0.008;
+          const deltaQuat = quatFromAxisAngle(worldAxis, angle);
+          camera.targetQuat = quatNormalize(quatMultiply(deltaQuat, camera.targetQuat));
+        }
       }
       drag.x = event.clientX;
       drag.y = event.clientY;
@@ -829,9 +831,11 @@
         r: "reset",
         R: "reset",
       };
-      if (event.key === "ArrowUp") camera.targetPitch -= 0.15;
-      else if (event.key === "ArrowDown") camera.targetPitch += 0.15;
-      else if (actions[event.key]) action(actions[event.key]);
+      if (event.key === "ArrowUp") {
+        camera.targetQuat = quatNormalize(quatMultiply(quatFromAxisAngle([1, 0, 0], -0.15), camera.targetQuat));
+      } else if (event.key === "ArrowDown") {
+        camera.targetQuat = quatNormalize(quatMultiply(quatFromAxisAngle([1, 0, 0], 0.15), camera.targetQuat));
+      } else if (actions[event.key]) action(actions[event.key]);
       else return;
       clampCamera();
       event.preventDefault();
@@ -872,18 +876,15 @@
       updatePose(poseTime);
 
       const damping = reduceMotion.matches ? 1 : 0.1;
-      camera.yaw += (camera.targetYaw - camera.yaw) * damping;
-      camera.pitch += (camera.targetPitch - camera.pitch) * damping;
+      camera.quat = reduceMotion.matches ? camera.targetQuat : quatNormalize(slerp(camera.quat, camera.targetQuat, damping));
       camera.distance += (camera.targetDistance - camera.distance) * damping;
+      camera.pan = [0, 1, 2].map((axis) => camera.pan[axis] + (camera.targetPan[axis] - camera.pan[axis]) * damping);
 
-      const cosPitch = Math.cos(camera.pitch);
-      const eye = [
-        camera.distance * Math.sin(camera.yaw) * cosPitch,
-        camera.distance * Math.sin(camera.pitch),
-        camera.distance * Math.cos(camera.yaw) * cosPitch,
-      ];
+      const upWorld = quatRotateVector(camera.quat, [0, 1, 0]);
+      const eye = quatRotateVector(camera.quat, [0, 0, camera.distance]).map((value, axis) => value + camera.pan[axis]);
+      const target = camera.pan;
       const projection = M.perspective(Math.PI / 4.1, resize(), 0.05, 30);
-      const view = M.lookAt(eye, [0, 0, 0], [0, 1, 0]);
+      const view = M.lookAt(eye, target, upWorld);
       const idleTilt = reduceMotion.matches ? 0 : Math.sin(time * 0.42) * 0.008;
       const viewerMatrix = M.multiply(M.rotationZ(idleTilt), viewerBase);
 
@@ -904,36 +905,24 @@
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, skinTexture);
       gl.uniform1i(gl.getUniformLocation(skinProgram, "u_skinTexture"), 1);
-      gl.bindVertexArray(skinVao);
-      gl.drawElements(gl.TRIANGLES, indexData.length, skinIndexType, 0);
-
-      gl.useProgram(nailProgram);
-      gl.uniformMatrix4fv(gl.getUniformLocation(nailProgram, "u_projection"), false, projection);
-      gl.uniformMatrix4fv(gl.getUniformLocation(nailProgram, "u_view"), false, view);
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, nailTexture);
-      gl.uniform1i(gl.getUniformLocation(nailProgram, "u_nailTexture"), 2);
-      gl.bindVertexArray(nailVao);
-      gl.disable(gl.CULL_FACE);
-      nailMeshes.forEach((nail) => {
-        const model = M.multiply(viewerMatrix, M.multiply(worldMatrices[nail.boneIndex], nail.localMatrix));
-        gl.uniformMatrix4fv(gl.getUniformLocation(nailProgram, "u_model"), false, model);
-        gl.drawElements(gl.TRIANGLES, nailGeometry.indices.length, gl.UNSIGNED_SHORT, 0);
-      });
-      gl.enable(gl.CULL_FACE);
+      gl.uniform1i(gl.getUniformLocation(skinProgram, "u_nailTexture"), 2);
+      gl.bindVertexArray(skinVao);
+      gl.drawElements(gl.TRIANGLES, indexData.length, skinIndexType, 0);
       gl.bindVertexArray(null);
       requestAnimationFrame(render);
     }
 
     requestAnimationFrame(render);
-    return { setFinish, action, jointCount: skin.joints.length, nailCount: nailMeshes.length };
+    return { setFinish, action, jointCount: skin.joints.length, nailCount: nailRegionNames.length };
   }
 
   createViewer()
     .then((api) => {
       viewerApi = api;
       loadingState.classList.add("is-hidden");
-      status.textContent = `Ready · ${api.jointCount}-joint rig · ${api.nailCount} nail meshes`;
+      status.textContent = `Ready · ${api.jointCount}-joint rig · ${api.nailCount} nail regions`;
     })
     .catch((error) => {
       console.error(error);
