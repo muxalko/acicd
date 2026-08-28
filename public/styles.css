@@ -23,7 +23,7 @@
   --viewer-ink: #24202b;
   --focus: #7f493f;
   --shadow: 0 28px 80px rgba(51, 41, 37, 0.12);
-  --max-width: 1500px;
+  --max-width: 1760px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -666,8 +666,7 @@ html:not(.js) #viewer-fallback[hidden] {
 }
 
 .filter-group {
-  display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
+  display: flex;
   align-items: start;
   gap: 0.55rem;
   margin: 0;
@@ -907,6 +906,40 @@ html:not(.js) #viewer-fallback[hidden] {
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
   outline-offset: 3px;
+}
+
+@media (min-width: 1280px) {
+  .studio-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(700px, 720px);
+  }
+
+  .design-panel {
+    padding-inline: 1.5rem;
+  }
+
+  .catalog-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: 0.55rem 0.75rem;
+    margin-top: 0.9rem;
+  }
+
+  .filter-group {
+    flex: 0 1 auto;
+  }
+
+  .filter-group[data-filter-group="finish"] {
+    flex: 1 1 390px;
+  }
+
+  .pill-row {
+    gap: 0.26rem;
+  }
+
+  .pill-row button {
+    padding-inline: 0.42rem;
+  }
 }
 
 @media (max-width: 1050px) {
