@@ -5,10 +5,11 @@ a same-origin GLB. It uses a small purpose-built WebGL 2 renderer, so the page
 has no runtime packages, CDN imports, or build step.
 
 The renderer reads the model's skinned mesh, 69-joint skeleton, inverse bind
-matrices, and `Open/Close` animation. Five separate procedural nail meshes are
-attached to the weighted distal finger bones. Nail finishes use their own shader,
-material, and generated texture; the original skin texture is bound only to the
-hand shader and is never modified by finish selection.
+matrices, and `Open/Close` animation. The five original fingernail UV regions are
+remapped in the hand shader to a cached five-cell Canvas atlas, so every finger
+can carry coordinated independent artwork without separate nail meshes. Card
+previews and atlases come from the same framework-free Canvas 2D design system;
+the original skin texture remains separate and is never modified by selection.
 
 ## Model credit
 
